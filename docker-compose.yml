@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: pocket-api
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./pocket:/app/pocket
+      - ./main.py:/app/main.py
+      - ./pyproject.toml:/app/pyproject.toml
+    environment:
+      MODULE_NAME: pocket.app.main
+      VARIABLE_NAME: app
+
+  db:
+    image: postgres:16
+    container_name: pocket-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pocket
+      POSTGRES_USER: pocket
+      POSTGRES_PASSWORD: pocket
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pocket"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
